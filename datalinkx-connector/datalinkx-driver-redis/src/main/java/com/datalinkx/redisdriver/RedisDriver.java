@@ -28,6 +28,12 @@ public class RedisDriver extends AbstractDriver<RedisSetupInfo, AbstractReader, 
         return this.redisService.getClient();
     }
 
+
+    @Override
+    public String retrieveWriterMax(DatalinkXJobDetail.Reader reader, DatalinkXJobDetail.Writer writer) throws Exception {
+        return "";
+    }
+
     @Override
     public void truncateData(DatalinkXJobDetail.Writer writer) throws Exception {
 

@@ -15,7 +15,6 @@
     <modules>
         <module>datalinkx-driver</module>
         <module>datalinkx-stream</module>
-        <module>datalinkx-transform</module>
         <module>datalinkx-driver-es</module>
         <module>datalinkx-driver-oracle</module>
         <module>datalinkx-driver-http</module>

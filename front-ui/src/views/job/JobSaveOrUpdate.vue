@@ -333,7 +333,7 @@
                 }
               }).catch(err => {
                 this.confirmLoading = false
-                this.$message.error(err.errstr)
+                this.$message.error(err.message || err.errstr)
               })
             } else {
               addObj(formData).then(res => {
@@ -345,11 +345,12 @@
                   this.$message.success('新增成功')
                 } else {
                   this.confirmLoading = false
+                  console.log(res)
                   this.$message.error(res.errstr)
                 }
               }).catch(err => {
                 this.confirmLoading = false
-                this.$message.error(err.errstr)
+                this.$message.error(err.message || err.errstr)
               })
             }
             // setTimeout(() => {

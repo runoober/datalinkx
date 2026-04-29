@@ -5,7 +5,6 @@ import com.datalinkx.common.result.DatalinkXJobDetail;
 import com.datalinkx.common.utils.ObjectUtils;
 import com.datalinkx.driver.dsdriver.base.meta.DbTableField;
 import com.datalinkx.driver.dsdriver.base.reader.AbstractReader;
-import com.datalinkx.driver.dsdriver.transformdriver.TransformNode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashSet;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 
 public interface IDsReader extends IDsDriver {
     // ============= Flinkx 引擎
-    String retrieveMax(DatalinkXJobDetail.Reader reader, String field) throws Exception;
+    String retrieveReaderMax(DatalinkXJobDetail.Reader reader, String field) throws Exception;
     Object getReaderInfo(DatalinkXJobDetail.Reader reader) throws Exception;
     List<String> treeTable(String catalog, String schema) throws Exception;
     List<DbTableField> getFields(String catalog, String schema, String tableName) throws Exception;
@@ -61,7 +60,7 @@ public interface IDsReader extends IDsDriver {
                 String maxValue = reader.getMaxValue();
 
                 // 3.1、更新下一次的增量条件
-                String nextMaxValue = readDsDriver.retrieveMax(reader, field);
+                String nextMaxValue = readDsDriver.retrieveReaderMax(reader, field);
                 if (!ObjectUtils.isEmpty(nextMaxValue)) {
                     reader.setMaxValue(nextMaxValue);
                 }
@@ -69,7 +68,7 @@ public interface IDsReader extends IDsDriver {
                 return String.format(" %s > %s ", wrapColumnName(field), wrapValue(fieldType, maxValue));
             }
             // 4、如果是首次增量同步，上一次同步字段最大值为空，保存到下次
-            String nextMaxValue = readDsDriver.retrieveMax(reader, field);
+            String nextMaxValue = readDsDriver.retrieveReaderMax(reader, field);
             if (!ObjectUtils.isEmpty(nextMaxValue)) {
                 reader.setMaxValue(nextMaxValue);
             }

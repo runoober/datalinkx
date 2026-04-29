@@ -141,12 +141,25 @@ public class JdbcDriver<T extends JdbcSetupInfo, P extends JdbcReader, Q extends
 
 
     @Override
-    public String retrieveMax(DatalinkXJobDetail.Reader reader, String field) throws Exception {
-        String fieldName = reader.getTransferSetting().getIncreaseField();
-        String catalog = reader.getCatalog();
-        String schema = reader.getSchema();
-        String tableName = reader.getTableName();
+    public String retrieveReaderMax(DatalinkXJobDetail.Reader reader, String field) throws Exception {
+        return this.retrieveMax(reader.getTransferSetting().getIncreaseField(), reader.getCatalog(), reader.getSchema(), reader.getTableName());
+    }
 
+    @Override
+    public String retrieveWriterMax(DatalinkXJobDetail.Reader reader, DatalinkXJobDetail.Writer writer) throws Exception {
+        // 根据下标匹配reader的增量字段
+        int increaseFieldIndex = -1;
+        for (int i = 0; i < reader.getColumns().size(); i++) {
+            if (Objects.equals(reader.getTransferSetting().getIncreaseField(), reader.getTransferSetting().getIncreaseField())) {
+                increaseFieldIndex = i;
+            }
+        }
+        // 如果是增量模式,必须要把增量字段进行流转,根据下标一一对应,找到目标库的增量字段
+        String writerIncreaseField = writer.getColumns().get(increaseFieldIndex);
+        return this.retrieveMax(writerIncreaseField, writer.getCatalog(), writer.getSchema(), writer.getTableName());
+    }
+
+    private String retrieveMax(String fieldName, String catalog, String schema, String tableName) throws Exception {
         String maxSql = String.format("select max(%s) from %s ", wrapColumnName(fieldName), wrapTableName(catalog, schema, tableName));
 
         log.info(String.format("retrieveMax, sql: %s", maxSql));
@@ -162,8 +175,9 @@ public class JdbcDriver<T extends JdbcSetupInfo, P extends JdbcReader, Q extends
         } finally {
             this.disConnect(connection);
         }
-        return null;
+        return "";
     }
+
 
     @Override
     public void truncateData(DatalinkXJobDetail.Writer writer) throws Exception {

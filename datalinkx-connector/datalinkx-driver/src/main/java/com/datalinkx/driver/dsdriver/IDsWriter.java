@@ -5,7 +5,7 @@ import com.datalinkx.common.result.DatalinkXJobDetail;
 import com.datalinkx.driver.dsdriver.base.writer.AbstractWriter;
 
 public interface IDsWriter extends IDsDriver {
-    // ============= Flinkx 引擎
+    String retrieveWriterMax(DatalinkXJobDetail.Reader reader, DatalinkXJobDetail.Writer writer) throws Exception;    // ============= Flinkx 引擎
     void truncateData(DatalinkXJobDetail.Writer writer) throws Exception;
     Object getWriterInfo(DatalinkXJobDetail.Writer writer) throws Exception;
 

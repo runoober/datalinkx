@@ -30,7 +30,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.datalinkx.common.constants.MetaConstants.JobStatus.JOB_STATUS_ERROR;
 import static com.datalinkx.common.constants.MetaConstants.JobStatus.JOB_STATUS_SUCCESS;
+import static com.datalinkx.common.constants.MetaConstants.JobSyncMode.INCREMENT_MODE;
 
 @Slf4j
 @Component
@@ -204,13 +206,36 @@ public class DataTransferAction extends AbstractDataTransferAction<DatalinkXJobD
 
     @Override
     protected void afterExec(FlinkActionGraph unit, boolean success) {
-        // 记录增量记录
-        datalinkXServerClient.updateSyncMode(
-                JobSyncModeForm.builder()
-                        .jobId(unit.getJobId())
-                        .increateValue(
-                                unit.getReader().getMaxValue()
-                        ).build());
+        // 如果是增量任务&成功则记录来源数据源增量记录
+        if (INCREMENT_MODE.equals(unit.getReader().getTransferSetting().getType())) {
+            if (success) {
+                datalinkXServerClient.updateSyncMode(
+                        JobSyncModeForm.builder()
+                                .jobId(unit.getJobId())
+                                .increateValue(
+                                        unit.getReader().getMaxValue()
+                                ).build());
+            } else {
+                // 失败记录目标数据源增量记录
+                String errorMsg = String.format("记录增量数据失败，预计下次流转起点为%s > %s!!!", unit.getReader().getTransferSetting().getIncreaseField(), unit.getReader().getMaxValue());
+                try {
+                    IDsWriter writeDsDriver = DsDriverFactory.getDsWriter(unit.getWriter().getConnectId());
+                    String writerMaxValue = writeDsDriver.retrieveWriterMax(unit.getReader(), unit.getWriter());
+
+                    datalinkXServerClient.updateSyncMode(
+                            JobSyncModeForm.builder()
+                                    .jobId(unit.getJobId())
+                                    .increateValue(writerMaxValue)
+                                    .build()
+                    );
+                } catch (Exception e) {
+                    log.error(errorMsg);
+                    log.error(e.getMessage(), e);
+                } finally {
+                    super.sendMessage(unit.getJobId(), unit.getTrigger(), JOB_STATUS_ERROR, errorMsg);
+                }
+            }
+        }
     }
 
     @Override

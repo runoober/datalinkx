@@ -1,5 +1,6 @@
 package com.datalinkx.esdriver;
 
+import com.datalinkx.common.exception.DatalinkXJobException;
 import com.datalinkx.common.result.DatalinkXJobDetail;
 import com.datalinkx.common.utils.ConnectIdUtils;
 import com.datalinkx.common.utils.JsonUtils;
@@ -16,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.datalinkx.common.constants.MetaConstants.JobSyncMode.INCREMENT_MODE;
 
 
 public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> implements IDsReader, IDsWriter {
@@ -37,21 +40,21 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
     }
 
 
-    private Map<String, Object> getBoolQuery(DatalinkXJobDetail.Reader reader) throws Exception {
+    private Map<String, Object> getBoolQuery(DatalinkXJobDetail.TransferSetting transferSetting) throws Exception {
 
         List<Map<String, Object>> mustList = new ArrayList<>();
-        if (reader.getTransferSetting().getIncreaseField() != null) {
-            String field = reader.getTransferSetting().getIncreaseField();
-            String fieldType = reader.getTransferSetting().getIncreaseFieldType();
+        if (transferSetting.getIncreaseField() != null) {
+            String field = transferSetting.getIncreaseField();
+            String fieldType = transferSetting.getIncreaseFieldType();
 
 
-            if ("increment".equalsIgnoreCase(reader.getTransferSetting().getType())) {
-                String startValue = reader.getTransferSetting().getStart();
+            if (INCREMENT_MODE.equalsIgnoreCase(transferSetting.getType())) {
+                String startValue = transferSetting.getStart();
                 if (startValue != null) {
                     mustList.add(esService.buildRange(field, startValue, ">", "must", fieldType));
                 }
 
-                String endValue = reader.getTransferSetting().getEnd();
+                String endValue = transferSetting.getEnd();
                 if (endValue != null) {
                     mustList.add(esService.buildRange(field, endValue, "<", "must", fieldType));
                 }
@@ -71,8 +74,8 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
     }
 
     @Override
-    public String retrieveMax(DatalinkXJobDetail.Reader reader, String maxField) throws Exception {
-        Map<String, Object> boolMap = getBoolQuery(reader);
+    public String retrieveReaderMax(DatalinkXJobDetail.Reader reader, String maxField) throws Exception {
+        Map<String, Object> boolMap = getBoolQuery(reader.getTransferSetting());
         Map<String, Object> queryMap = new HashMap<String, Object>() {
             {
                 put("query", boolMap);
@@ -90,12 +93,12 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
 
     @Override
     public Object getReaderInfo(DatalinkXJobDetail.Reader reader) throws Exception {
-        Map<String, Object> boolMap = getBoolQuery(reader);
+        Map<String, Object> boolMap = getBoolQuery(reader.getTransferSetting());
         Map<String, Object> mustMap = (Map<String, Object>) boolMap.get("bool");
         if (reader.getTransferSetting().getIncreaseField() != null
                 && StringUtils.isEmpty(reader.getMaxValue())) {
             String maxField = reader.getTransferSetting().getIncreaseField();
-            String maxValue = retrieveMax(reader, maxField);
+            String maxValue = retrieveReaderMax(reader, maxField);
             if (null != maxValue) {
                 reader.setMaxValue(maxValue);
                 String fieldType = reader.getTransferSetting().getIncreaseFieldType();
@@ -148,6 +151,43 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
         return esService.getFields(tableName);
     }
 
+
+    @Override
+    public String retrieveWriterMax(DatalinkXJobDetail.Reader reader, DatalinkXJobDetail.Writer writer) throws Exception {
+        // 根据下标匹配reader的增量字段
+        int increaseFieldIndex = -1;
+        for (int i = 0; i < reader.getColumns().size(); i++) {
+            if (Objects.equals(reader.getTransferSetting().getIncreaseField(), reader.getTransferSetting().getIncreaseField())) {
+                increaseFieldIndex = i;
+            }
+        }
+        // 如果是增量模式,必须要把增量字段进行流转,根据下标一一对应,找到目标库的增量字段
+        String writerIncreaseField = writer.getColumns().get(increaseFieldIndex);
+        DbTableField writerIncreaseTableField = this.getFields(writer.getCatalog(), writer.getSchema(), writer.getTableName())
+                .stream()
+                .filter(field -> Objects.equals(field.getName(), writerIncreaseField))
+                .findFirst()
+                .orElseThrow(() -> new DatalinkXJobException("目标库增量字段获取异常"));
+
+        DatalinkXJobDetail.TransferSetting writerSetting = DatalinkXJobDetail.TransferSetting.builder()
+                .increaseField(writerIncreaseField)
+                .increaseFieldType(writerIncreaseTableField.getType())
+                .build();
+
+        Map<String, Object> boolMap = getBoolQuery(writerSetting);
+        Map<String, Object> queryMap = new HashMap<String, Object>() {
+            {
+                put("query", boolMap);
+                put("sort", Lists.newArrayList(new HashMap<String, Object>() {
+                    {
+                        put(writerIncreaseField, "desc");
+                    }
+                }));
+                put("size", 1);
+            }
+        };
+        return esService.retrieveMax(writer.getTableName(), JsonUtils.toJson(queryMap), writerIncreaseField);
+    }
 
     @Override
     public void truncateData(DatalinkXJobDetail.Writer writer) throws Exception {

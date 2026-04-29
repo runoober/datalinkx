@@ -21,6 +21,7 @@ import com.datalinkx.dataserver.service.JobRelationService;
 import com.datalinkx.dataserver.service.JobService;
 import com.datalinkx.driver.dsdriver.DsDriverFactory;
 import com.datalinkx.driver.dsdriver.IDsReader;
+import com.datalinkx.driver.dsdriver.IDsWriter;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.datalinkx.common.constants.MetaConstants.JobStatus.JOB_STATUS_STOP;
@@ -150,7 +148,7 @@ public class JobServiceImpl implements JobService {
 	public void validJobForm(JobForm.JobCreateForm form) {
 		// 1、判断数据源是否存在
 		DsBean fromDsBean = dsRepository.findByDsId(form.getFromDsId()).orElseThrow(() -> new DatalinkXServerException(StatusCode.DS_NOT_EXISTS, "来源数据源不存在"));
-		dsRepository.findByDsId(form.getToDsId()).orElseThrow(() -> new DatalinkXServerException(StatusCode.DS_NOT_EXISTS, "目标数据源不存在"));
+		DsBean toDsBean = dsRepository.findByDsId(form.getToDsId()).orElseThrow(() -> new DatalinkXServerException(StatusCode.DS_NOT_EXISTS, "目标数据源不存在"));
 		// 2、判断流转任务名称是否重复
 		jobRepository.findByName(form.getJobName()).ifPresent(jobBean -> {
 			if (form instanceof JobForm.JobModifyForm) {
@@ -167,7 +165,7 @@ public class JobServiceImpl implements JobService {
 				&& ObjectUtils.isEmpty(form.getSyncMode().getIncreateField())) {
 			throw new DatalinkXServerException(StatusCode.JOB_CONFIG_ERROR, "增量模式必须指定增量字段");
 		}
-		if ("increment".equals(form.getSyncMode().getMode())) {
+		if (MetaConstants.JobSyncMode.INCREMENT_MODE.equals(form.getSyncMode().getMode())) {
 			form.getSyncMode().setIncreateValue("");
 		}
 		// 4、判断增量模式下是否是时间类型或数值类型
@@ -178,6 +176,16 @@ public class JobServiceImpl implements JobService {
 				if (!isIncremental) {
 					throw new DatalinkXServerException(StatusCode.JOB_CONFIG_ERROR, "增量字段必须是日期或数值类型");
 				}
+
+				boolean isContainIncreaseField = form.getFieldMappings()
+						.stream()
+						.map(JobForm.FieldMappingForm::getSourceField)
+						.collect(Collectors.toList())
+						.contains(form.getSyncMode().getIncreateField());
+				if (!isContainIncreaseField) {
+					throw new DatalinkXServerException(StatusCode.JOB_CONFIG_ERROR, "增量模式下同步字段中必须包含增量字段");
+				}
+
 			} catch (Exception e) {
 				throw new DatalinkXServerException(StatusCode.JOB_CONFIG_ERROR, e.getMessage());
 			}

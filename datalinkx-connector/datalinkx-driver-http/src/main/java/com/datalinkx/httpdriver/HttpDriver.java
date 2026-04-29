@@ -43,7 +43,7 @@ public class HttpDriver extends AbstractDriver<HttpSetupInfo, HttpReader, HttpWr
 
 
     @Override
-    public String retrieveMax(DatalinkXJobDetail.Reader reader, String field) throws Exception {
+    public String retrieveReaderMax(DatalinkXJobDetail.Reader reader, String field) throws Exception {
         return null;
     }
 
@@ -156,6 +156,11 @@ public class HttpDriver extends AbstractDriver<HttpSetupInfo, HttpReader, HttpWr
                 .pluginName(PLUGIN_NAME)
                 .resultTableName(MetaConstants.CommonConstant.SOURCE_TABLE)
                 .build();
+    }
+
+    @Override
+    public String retrieveWriterMax(DatalinkXJobDetail.Reader reader, DatalinkXJobDetail.Writer writer) throws Exception {
+        return "";
     }
 
     @Override

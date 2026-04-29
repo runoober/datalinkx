@@ -99,8 +99,7 @@ public abstract class AbstractDataTransferAction<T extends DatalinkXJobDetail, U
         this.destroyed(execUnit, status, error.toString());
     }
 
-    // 推送站内信
-    protected void sendMessage(String jobId, String trigger, Integer status) {
+    protected void sendMessage(String jobId, String trigger, Integer status, String detail) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm:ss");
         ProducerAdapterForm producerAdapterForm = new ProducerAdapterForm();
@@ -112,12 +111,22 @@ public abstract class AbstractDataTransferAction<T extends DatalinkXJobDetail, U
             put("job_id", jobId);
             put("user_id", trigger);
             put("status", status);
-            put("title", String.format("%s:%s %s", MetaConstants.CommonConstant.JOB_STATUS_PUSH_TITLE, jobId, MetaConstants.JobStatus.JOB_STATUS_TO_DB_NAME_MAP.get(status)));
+            put("title", String.format(
+                    "%s:%s %s",
+                    MetaConstants.CommonConstant.JOB_STATUS_PUSH_TITLE,
+                    jobId,
+                    MetaConstants.JobStatus.JOB_STATUS_TO_DB_NAME_MAP.get(status) + detail)
+            );
             put("avatar", "https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png");
             put("time", now.format(formatter));
         }};
         producerAdapterForm.setMessage(JsonUtils.toJson(jobProgress));
         MessageHubService messageHubService = (MessageHubService) ApplicationContextUtil.getBean("messageHubServiceImpl");
         messageHubService.produce(producerAdapterForm);
+    }
+
+    // 推送站内信
+    protected void sendMessage(String jobId, String trigger, Integer status) {
+        this.sendMessage(jobId, trigger, status, "");
     }
 }
