@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.datalinkx.common.constants.MetaConstants.JobStatus.JOB_STATUS_ERROR;
 import static com.datalinkx.common.constants.MetaConstants.JobStatus.JOB_STATUS_SUCCESS;
 import static com.datalinkx.common.constants.MetaConstants.JobSyncMode.INCREMENT_MODE;
+import static com.datalinkx.common.constants.MetaConstants.JobSyncMode.OVERWRITE_MODE;
 
 @Slf4j
 @Component
@@ -93,7 +94,7 @@ public class DataTransferAction extends AbstractDataTransferAction<DatalinkXJobD
     protected void beforeExec(FlinkActionGraph unit) throws Exception {
         log.info(String.format("jobid: %s, begin from %s to %s", unit.getJobId(), unit.getReader().getTableName(), unit.getWriter().getTableName()));
         // 是否覆盖数据
-        if (unit.getCover() == 1) {
+        if (unit.getCover() == 1 && OVERWRITE_MODE.equals(unit.getReader().getTransferSetting().getType())) {
             IDsWriter writeDsDriver = DsDriverFactory.getDsWriter(unit.getWriter().getConnectId());
             writeDsDriver.truncateData(unit.getWriter());
         }

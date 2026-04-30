@@ -210,7 +210,11 @@ export default {
         } else {
           this.$message.error(res.errstr)
         }
-      }).finally(() => {
+      }).catch(err => {
+          const errData = err.response?.data || {}
+          this.$message.error(errData.errstr || err.message || '操作失败')
+        }
+      ).finally(() => {
         this.loading = false
       })
     },

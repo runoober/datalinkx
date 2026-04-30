@@ -88,6 +88,7 @@ public class DtsJobServiceImpl implements DtsJobService {
         return DatalinkXJobDetail.builder()
                 .jobId(jobId)
                 .jobName(jobBean.getName())
+                // fake user_id
                 .trigger("1")
                 .type(jobBean.getType())
                 .cover(jobBean.getCover())
@@ -209,8 +210,6 @@ public class DtsJobServiceImpl implements DtsJobService {
             transferSetting.setStart(syncModeForm.getIncreateValue());
         }
 
-
-
         String selectField = jobConf.stream()
                 .map(JobForm.FieldMappingForm::getSourceField)
                 .filter(typeMappings::containsKey)
@@ -317,6 +316,7 @@ public class DtsJobServiceImpl implements DtsJobService {
                 .insertFields(insertFields)
                 .tableName(jobBean.getToTb())
                 .columns(toCols)
+                .batchSize(commonProperties.getFetchSize())
                 .build();
         writer.setWriterGraph(dsWriter.getWriterInfo(writer));
         return writer;

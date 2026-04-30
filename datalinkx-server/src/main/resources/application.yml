@@ -47,7 +47,7 @@ xxl-job:
 
 # 流转配置性能
 data-transfer:
-  # 批次提交行数，读fetch-size行后提交
+  # 批次提交行数，读fetch-size写fetch-size
   fetch-size: 1000
   # 流式任务提交阈值，读stream-batch-size行后提交
   stream-batch-size: 5

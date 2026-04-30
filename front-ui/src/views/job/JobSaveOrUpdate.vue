@@ -333,7 +333,8 @@
                 }
               }).catch(err => {
                 this.confirmLoading = false
-                this.$message.error(err.message || err.errstr)
+                const errData = err.response?.data || {}
+                this.$message.error(errData.errstr || err.message || '操作失败')
               })
             } else {
               addObj(formData).then(res => {
@@ -349,10 +350,11 @@
                   this.$message.error(res.errstr)
                 }
               }).catch(err => {
-                this.confirmLoading = false
-                this.$message.error(err.message || err.errstr)
-              })
-            }
+            this.confirmLoading = false
+            const errData = err.response?.data || {}
+            this.$message.error(errData.errstr || err.message || '操作失败')
+          })
+        }
             // setTimeout(() => {
             //   this.confirmLoading = false
             //   this.$emit('ok')

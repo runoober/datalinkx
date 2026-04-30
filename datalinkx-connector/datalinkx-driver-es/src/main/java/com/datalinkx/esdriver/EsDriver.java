@@ -1,5 +1,6 @@
 package com.datalinkx.esdriver;
 
+import com.datalinkx.common.constants.MetaConstants;
 import com.datalinkx.common.exception.DatalinkXJobException;
 import com.datalinkx.common.result.DatalinkXJobDetail;
 import com.datalinkx.common.utils.ConnectIdUtils;
@@ -130,6 +131,7 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
                 .type(types.toArray(new String[0]))
                 .query(JsonUtils.toJsonNode(JsonUtils.toJson(boolMap)))
                 .timeout(ES_TIMEOUT).column(reader.getColumns())
+                .engine(MetaConstants.CommonConstant.FLINKX_ENGINE)
                 .build());
 
         return readerInfo;
@@ -227,6 +229,7 @@ public class EsDriver extends AbstractDriver<EsSetupInfo, EsReader, EsWriter> im
                 .index(tableName)
                 .type(indexType)
                 .column(esColumns)
+                .engine(MetaConstants.CommonConstant.FLINKX_ENGINE)
                 .build());
         return writerInfo;
     }

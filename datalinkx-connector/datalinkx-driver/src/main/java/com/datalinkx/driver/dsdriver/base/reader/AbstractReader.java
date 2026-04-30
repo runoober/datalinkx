@@ -1,8 +1,10 @@
 package com.datalinkx.driver.dsdriver.base.reader;
 
 import com.datalinkx.common.constants.MetaConstants;
+import com.datalinkx.driver.dsdriver.base.deserializer.EngineBasedSerializer;
 import com.datalinkx.driver.dsdriver.base.deserializer.EngineField;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -10,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
 @Getter
+@JsonSerialize(using = EngineBasedSerializer.class)
 public abstract class AbstractReader {
     public String engine = MetaConstants.CommonConstant.FLINKX_ENGINE;
     @EngineField({EngineField.Engine.SEATUNNEL})

@@ -1,8 +1,11 @@
 package com.datalinkx.driver.dsdriver.base.writer;
 
 import com.datalinkx.common.constants.MetaConstants;
+import com.datalinkx.driver.dsdriver.base.deserializer.EngineBasedSerializer;
 import com.datalinkx.driver.dsdriver.base.deserializer.EngineField;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -10,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
+@JsonSerialize(using = EngineBasedSerializer.class)
 public abstract class AbstractWriter {
     public String engine = MetaConstants.CommonConstant.FLINKX_ENGINE;
     @EngineField({EngineField.Engine.FLINKX})

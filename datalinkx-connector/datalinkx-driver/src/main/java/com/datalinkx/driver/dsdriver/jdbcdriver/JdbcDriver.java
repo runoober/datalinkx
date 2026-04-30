@@ -285,6 +285,7 @@ public class JdbcDriver<T extends JdbcSetupInfo, P extends JdbcReader, Q extends
         readerInfo.setName(reader.getType().toLowerCase() + "reader");
 
         readerInfo.setParameter((P) JdbcReader.builder()
+                .engine(MetaConstants.CommonConstant.FLINKX_ENGINE)
                 .username(jdbcSetupInfo.getUid())
                 .password(jdbcSetupInfo.getPwd())
                 .fetchSize(reader.getTransferSetting().getFetchSize())
@@ -310,6 +311,7 @@ public class JdbcDriver<T extends JdbcSetupInfo, P extends JdbcReader, Q extends
         String schema = writer.getSchema();
         jdbcWriterInfo.setName(writer.getType().toLowerCase() + "writer");
         jdbcWriterInfo.setParameter((Q) JdbcWriter.builder()
+                .engine(MetaConstants.CommonConstant.FLINKX_ENGINE)
                 .username(jdbcSetupInfo.getUid())
                 .password(jdbcSetupInfo.getPwd())
                 .connection(Collections.singletonList(WriterConnection.builder()
