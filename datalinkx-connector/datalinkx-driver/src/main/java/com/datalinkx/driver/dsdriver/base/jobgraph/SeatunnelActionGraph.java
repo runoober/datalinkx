@@ -2,7 +2,7 @@ package com.datalinkx.driver.dsdriver.base.jobgraph;
 
 import com.datalinkx.driver.dsdriver.base.reader.AbstractReader;
 import com.datalinkx.driver.dsdriver.base.writer.AbstractWriter;
-import com.datalinkx.driver.dsdriver.transformdriver.TransformNode;
+import com.datalinkx.driver.dsdriver.base.transform.TransformNode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;

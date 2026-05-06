@@ -1,7 +1,9 @@
-package com.datalinkx.driver.dsdriver.transformdriver;
+package com.datalinkx.driver.dsdriver.transformdriver.transform;
 
 import com.datalinkx.common.constants.MetaConstants;
 import com.datalinkx.driver.dsdriver.base.transform.SQLNode;
+import com.datalinkx.driver.dsdriver.base.transform.TransformNode;
+import com.datalinkx.driver.dsdriver.transformdriver.ITransformDriver;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,7 +22,7 @@ public class SQLTransformDriver extends ITransformDriver {
                 .query(transferSQLMeta)
                 .sourceTableName(MetaConstants.CommonConstant.SOURCE_TABLE)
                 .resultTableName(MetaConstants.CommonConstant.SQL_OUTPUT_TABLE)
-                .pluginName("sql")
+                .pluginName(MetaConstants.CommonConstant.TRANSFORM_SQL)
                 .build();
     }
 

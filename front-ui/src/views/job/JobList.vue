@@ -238,52 +238,88 @@ export default {
       this.init()
     },
     createEventSource () {
-      if (window.EventSource) {
+      if (this.eventSource) {
+        this.eventSource.close()
+      }
+      if (!window.EventSource) {
+        console.log('browser not support SSE')
+        return
+      }
+      const reconnectDelay = 3000
+      const maxReconnectDelay = 30000
+      let currentReconnectDelay = reconnectDelay
+      let reconnectTimer = null
+
+      const connect = () => {
         this.eventSource = new EventSource(
           `api/api/sse/connect/jobList`, {
-            // 设置重连时间
             heartbeatTimeout: 60 * 60 * 1000
-            // 添加token
           })
+
         this.eventSource.onopen = (e) => {
-          console.log('connect success')
-        }
-        this.eventSource.onmessage = (e) => {
-          console.log('from server data:', e.data)
-          const flashData = JSON.parse(e.data)
-          console.log(flashData)
-          for (const i of this.tableData) {
-            if (i.job_id === flashData.job_id) {
-              i.status = flashData.status
-              if (flashData.status === 1) {
-                i.progress = (flashData.read_records + '/' + flashData.write_records)
-              }
-            }
+          console.log('SSE connected')
+          currentReconnectDelay = reconnectDelay
+          if (reconnectTimer) {
+            clearTimeout(reconnectTimer)
+            reconnectTimer = null
           }
         }
-      } else {
-        console.log('browser not support SSE')
+
+        this.eventSource.onmessage = (e) => {
+          if (e.data === 'ping') {
+            console.log('heartbeat received')
+            return
+          }
+          console.log('from server data:', e.data)
+          try {
+            const flashData = JSON.parse(e.data)
+            console.log(flashData)
+            for (const i of this.tableData) {
+              if (i.job_id === flashData.job_id) {
+                i.status = flashData.status
+                if (flashData.status === 1) {
+                  i.progress = (flashData.read_records + '/' + flashData.write_records)
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to parse SSE message:', err)
+          }
+        }
+
+        this.eventSource.onerror = (e) => {
+          console.log('SSE error, reconnecting in', currentReconnectDelay, 'ms...')
+          this.eventSource.close()
+          this.eventSource = null
+
+          reconnectTimer = setTimeout(() => {
+            currentReconnectDelay = Math.min(currentReconnectDelay * 2, maxReconnectDelay)
+            connect()
+          }, currentReconnectDelay)
+        }
       }
-    }
-  },
-  beforeDestroy () {
-    if (this.eventSource) {
-      this.eventSource.close()
-    }
-    closeConnect('jobList')
-    // 清理定时刷新
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer)
-      this.refreshTimer = null
-    }
-  },
-  created () {
-    this.init()
-    this.createEventSource()
-    // 启动定时刷新，每10秒刷新一次任务列表
-    this.refreshTimer = setInterval(() => {
+
+      connect()
+    },
+    beforeDestroy () {
+      if (this.eventSource) {
+        this.eventSource.close()
+      }
+      closeConnect('jobList')
+      // 清理定时刷新
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer)
+        this.refreshTimer = null
+      }
+    },
+    created () {
       this.init()
-    }, 15000)
+      this.createEventSource()
+      // 启动定时刷新，每10秒刷新一次任务列表
+      this.refreshTimer = setInterval(() => {
+        this.init()
+      }, 15000)
+    }
   }
 }
 </script>

@@ -10,10 +10,7 @@ import com.datalinkx.driver.dsdriver.IDsReader;
 import com.datalinkx.driver.dsdriver.IDsWriter;
 import com.datalinkx.driver.dsdriver.base.AbstractDriver;
 import com.datalinkx.driver.dsdriver.base.meta.DbTableField;
-import com.datalinkx.driver.dsdriver.base.reader.AbstractReader;
-import com.datalinkx.driver.dsdriver.base.writer.AbstractWriter;
 import com.datalinkx.driver.dsdriver.setupinfo.HttpSetupInfo;
-import com.datalinkx.driver.dsdriver.transformdriver.TransformNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
